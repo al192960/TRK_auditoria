@@ -7,7 +7,7 @@ source.include_exts = py,png,jpg,kv,json
 version = 1.0
 
 # Librerías que se empaquetan dentro del APK
-requirements = python3,kivy==2.3.1,openpyxl,et_xmlfile,pyjnius,android
+requirements = python3,kivy,openpyxl,et_xmlfile,pyjnius,android
 
 # Se adapta a vertical y horizontal (el camión se gira solo)
 orientation = portrait, landscape
@@ -18,8 +18,12 @@ android.permissions = WRITE_EXTERNAL_STORAGE
 
 android.api = 34
 android.minapi = 24
-android.archs = arm64-v8a, armeabi-v7a
+android.archs = arm64-v8a
 android.accept_sdk_license = True
+android.ndk = 25b
+
+# Versión ESTABLE de python-for-android (la de desarrollo falla con Python 3.14)
+p4a.branch = v2024.01.21
 
 [buildozer]
 log_level = 2
