@@ -1,47 +1,43 @@
-# Auditoría de Carga (app Android en Python / Kivy)
+# Auditoría de Carga (app Android en Python / Kivy) — v2.0
 
 ## Archivos
 | Archivo | Qué hace |
 |---|---|
-| `main.py` | La app: pantalla del camión, captura por posición, incidencias y envío por correo |
-| `reporte.py` | Arma el Excel (mismo acomodo que tu "Borrador de carga") |
-| `buildozer.spec` | Configuración para generar el APK |
+| `main.py` | La app: camión, captura por posición, incidencias, menú oculto y envío por correo |
+| `reporte.py` | Llena la plantilla original y genera el reporte de incidencias |
+| `plantilla.xlsm` | Tu "Borrador de carga" original. **No lo modifiques con otro nombre**; si cambias el formato, reemplaza este archivo |
+| `p4a_hook.py` | Permite mandar el Excel por correo sin guardarlo en el dispositivo |
+| `buildozer.spec` / `compilar_apk.sh` | Para generar el APK en Ubuntu/WSL (`bash compilar_apk.sh`) |
 
-## Cómo se usa
-1. En la pantalla principal escribe **TRK**, **Auditor** y elige **Turno** (auditor y turno se recuerdan).
-2. Toca una posición del camión (1–26).
-3. Teclea el **Área** → Enter → escanea **No. de parte** → Enter → escanea/teclea **Cantidad** → Enter → pasa solo al siguiente renglón.
-   - Si la etiqueta de cantidad viene como `Q100` o `100 PCS`, la app se queda con `100`.
-4. Hay 6 renglones. Si tocas **+ Agregar número** cuando ya hay 6, la app pide el **nombre de quien cargó**,
-   la categoría (por defecto *Mas de 6 numeros por pallet*) y un comentario. Eso queda como incidencia y se habilitan más renglones (en naranja).
-5. **Guardar** regresa al camión. Colores: gris = vacía, verde = capturada (con número de líneas), naranja = tiene incidencia.
-6. El botón **Incidencia** (en el camión o dentro de una posición) registra cualquier otra incidencia con las mismas categorías de tu libro.
-7. **Generar Excel y enviar** → escribe el/los correos (se recuerdan) → se abre Gmail/Outlook con el Excel adjunto.
-   Además queda una copia en `Descargas/AuditoriaCarga`.
-8. **Nueva** borra la captura para el siguiente camión. Todo se guarda automáticamente, así que no se pierde nada si se cierra la app.
+## Uso diario
+1. Escribe **TRK**, **AUDITOR** y elige **Turno** (todo se pasa a MAYÚSCULAS).
+2. Desliza el camión y toca una posición. Teclea el **ÁREA** y escanea **No. de parte → Enter → Cantidad → Enter**.
+   Los números de parte se guardan tal como los manda el escáner (no se pasan a mayúsculas).
+3. Más de 6 números en una posición → **+ Agregar número** pide el nombre de quien cargó y registra la incidencia.
+4. **Generar Excel y enviar** → se abre el correo con el archivo. El archivo vive solo en la caché privada de la app y se borra al regresar.
+5. La app pregunta si ya se envió; si dices que sí, limpia la troca para la siguiente.
 
-## El Excel que genera
-- **HCARGA**: mismas celdas que tu formato (posición 1 en D12, No. Parte en F12:F17, Cant. en G12:G17, etc.), para que puedas copiar el rango D12:S53 directo a tu libro y funcione la hoja COMPARAR.
-- **DETALLE**: todas las líneas, incluyendo las que pasan de 6.
-- **RESUMEN**: total por número de parte (para comparar contra SAP).
-- **INCIDENCIAS**: columnas Nombre, Tipo, Categoria, Fecha, Mes (en el mismo orden que tu Table3) + Posición, TRK y Auditor.
+## Excel de carga
+- Es **tu archivo original** (`plantilla.xlsm`) con las hojas HCARGA, COMPARAR, INCIDENNOCIAS y GRAFICA intactas: fórmulas, tablas, tablas dinámicas, gráficas y macros.
+- La app solo escribe en las celdas de captura de **HCARGA**: Fecha (D5), TRK (H5), nombre (J5), turno (T5), áreas, No. Parte y Cant. de las posiciones 1–26.
+- **COMPARAR** se recalcula sola al abrir el archivo en Excel. Solo falta pegar los datos de SAP en `# DE PARTE` / `CANTIDAD` (Table2), como ya lo haces.
+- Si una posición tiene **más de 6 números**, los extra se escriben en los bloques **27 y 28** de HCARGA (que el camión no usa), con el área "EXTRA P5", etc. Así COMPARAR también los cuenta. Caben 12 extra por troca.
+
+## Menú oculto (supervisor)
+Toca **5 veces seguidas** el título **"AUDITORÍA DE CARGA"**.
+- **Reporte de incidencias**: genera un Excel aparte con todas las incidencias pendientes (de todas las trocas) y lo manda por correo. Al confirmar el envío se borran de la lista.
+- **Recuperar última troca enviada** *(pide contraseña)*: vuelve a cargar la última troca que se mandó.
+- **Modo dos trocas** *(pide contraseña para encender)*: aparecen pestañas TROCA 1 / TROCA 2 para capturar dos al mismo tiempo.
+- **Cambiar contraseña**.
+
+Contraseña de fábrica: **2468** (cámbiala en el menú, o en `CONTRASENA_INICIAL` dentro de `main.py`).
 
 ## Escáner
-La app funciona con escáneres que escriben como teclado (Zebra, Honeywell, escáneres Bluetooth HID).
-Configura el escáner para que mande **Enter** al final de cada lectura (en Zebra: DataWedge → Keystroke output → "Send ENTER").
+Configura el escáner para que mande **Enter** después de cada lectura (Zebra: DataWedge → Keystroke output → Send ENTER).
 
-## Probar en la computadora
-```bash
+## Probar en la PC
+```
 pip install kivy openpyxl
-python main.py
+python main.py --size=480x854
 ```
-
-## Generar el APK (en Linux o WSL de Windows)
-```bash
-pip install buildozer cython
-sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses-dev libffi-dev libssl-dev
-cd auditoria_carga
-buildozer -v android debug
-```
-La primera vez tarda (descarga el SDK/NDK). El APK queda en `bin/`. Cópialo al celular e instálalo
-(permite "instalar apps de origen desconocido").
+En la PC no se abre el correo; solo te avisa dónde quedó el archivo temporal.

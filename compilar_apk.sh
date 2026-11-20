@@ -13,8 +13,8 @@ export PATH="$(echo "$PATH" | tr ':' '\n' | grep -v '^/mnt/' | paste -sd:)"
 ORIGEN="${1:-$(pwd)}"
 ORIGEN="$(cd "$ORIGEN" && pwd)"
 
-if [ ! -f "$ORIGEN/main.py" ] || [ ! -f "$ORIGEN/buildozer.spec" ]; then
-  echo "ERROR: en $ORIGEN no están main.py y buildozer.spec"
+if [ ! -f "$ORIGEN/main.py" ] || [ ! -f "$ORIGEN/buildozer.spec" ] || [ ! -f "$ORIGEN/plantilla.xlsm" ]; then
+  echo "ERROR: en $ORIGEN faltan main.py, buildozer.spec o plantilla.xlsm"
   exit 1
 fi
 
@@ -23,7 +23,7 @@ if [[ "$ORIGEN" == /mnt/* ]]; then
   PROY="$HOME/apps/auditoria_carga"
   echo ">> Copiando proyecto a $PROY (compilar en /mnt/c es lento y falla)"
   mkdir -p "$PROY"
-  cp "$ORIGEN"/*.py "$ORIGEN"/buildozer.spec "$PROY"/
+  cp "$ORIGEN"/*.py "$ORIGEN"/*.xlsm "$ORIGEN"/buildozer.spec "$PROY"/
   # limpiar compilaciones fallidas anteriores
   rm -rf "$PROY/.buildozer/android/platform/build-"* "$PROY/bin"
 else
